@@ -10,3 +10,5 @@ import org.openrndr.math.Vector2
 fun Vector2.limit(d: Double) =
         if (length > d) normalized * d
         else this
+
+val Number.d get() = toDouble()
