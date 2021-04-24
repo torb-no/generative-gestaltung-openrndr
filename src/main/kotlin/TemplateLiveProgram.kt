@@ -6,8 +6,8 @@ import utils.QuitOnEsc
 
 fun main() = application {
     configure {
-        width = 800
-        height = 800
+        width = 720
+        height = 720
     }
     oliveProgram {
         extend(QuitOnEsc())
