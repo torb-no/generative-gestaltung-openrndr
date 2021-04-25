@@ -12,3 +12,7 @@ fun Vector2.limit(d: Double) =
         else this
 
 val Number.d get() = toDouble()
+
+// From degrees to radians
+fun Double.toRadians() = Math.toRadians(this)
+fun Int.toRadians() = this.toDouble().toRadians()
