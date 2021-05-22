@@ -7,8 +7,8 @@ import org.openrndr.math.Vector2
 // Will probably mostly be adding
 // stuff I'm used to from Processing
 
-fun Vector2.limit(d: Double) =
-        if (length > d) normalized * d
+fun Vector2.limited(max: Double) =
+        if (squaredLength > max*max) normalized * max
         else this
 
 val Number.d get() = toDouble()
