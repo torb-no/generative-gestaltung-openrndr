@@ -6,13 +6,32 @@ import org.openrndr.extensions.Screenshots
 import org.openrndr.extra.noise.random
 import org.openrndr.extra.olive.oliveProgram
 import org.openrndr.extras.color.palettes.colorSequence
+import org.openrndr.extras.color.spaces.toHSLUVa
 import org.openrndr.math.Vector2
 import org.openrndr.math.map
+import spaces.toOKLABa
+import spaces.toOKLCHa
 import utils.QuitOnEsc
+import java.lang.NumberFormatException
 
 // TODO: Add swatch export
 
 private const val MAX_COLOR_LINES = 10
+
+typealias ColorConverter = (ColorRGBa) -> ConvertibleToColorRGBa
+
+private val converters = listOf<Pair<String, ColorConverter>>(
+    "(no converter)" to { it }, // 0
+    "RGB" to ColorRGBa::toRGBa,
+    "OKLABa"  to ColorRGBa::toOKLABa,
+    "LinearRGB" to ColorRGBa::toLinear,
+    "LAB" to { it.toLABa() },
+    "OKLCh" to ColorRGBa::toOKLCHa,
+    "HSLUV" to ColorRGBa::toHSLUVa,
+    "LUV" to { it.toLUVa() },
+    "HSVa" to ColorRGBa::toHSVa,
+    "HSLa" to ColorRGBa::toHSLa,
+)
 
 fun main() = application {
     configure {
@@ -20,18 +39,30 @@ fun main() = application {
         height = 800
     }
 
-    oliveProgram {
+    program {
         extend(QuitOnEsc())
         extend(Screenshots())
 
-        var convert: (ColorRGBa) -> ConvertibleToColorRGBa = ColorRGBa::toRGBa
+        var convert: ColorConverter = ColorRGBa::toRGBa
 
         keyboard.keyDown.listen {
-            convert = when (it.name) {
-                "1" -> ColorRGBa::toRGBa
-                "2" -> ColorRGBa::toHSVa
-                else -> convert
+            val index = try {
+                val number = it.name.toInt()
+                number
+            } catch (e: NumberFormatException) {
+                // Ignore non-number inputs
+                return@listen
             }
+
+            val (name, converter) = try {
+                converters[index]
+            } catch (e: ArrayIndexOutOfBoundsException) {
+                println("No converter assigned to $index")
+                return@listen
+            }
+
+            println(name)
+            convert = converter
         }
 
         // Using RGBa as result here as it easy to
