@@ -6,6 +6,7 @@ import org.openrndr.math.Vector2
 import utils.QuitOnEsc
 import java.lang.Double.max
 
+// FIXME: Add swatch export
 
 fun main() = application {
     configure {
@@ -17,12 +18,8 @@ fun main() = application {
         extend(QuitOnEsc())
         extend(Screenshots())
 
-
         fun sizedPixelData(image: ColorBuffer): ColorBufferShadow {
-            val rtImage = renderTarget(width, height) { colorBuffer(
-                format = ColorFormat.RGB,
-                type = ColorType.FLOAT32
-            ) }
+            val rtImage = renderTarget(width, height) { colorBuffer() }
 
             drawer.withTarget(rtImage) {
                 drawer.image(image, Vector2.ZERO, drawer.bounds.width, drawer.bounds.height)
@@ -34,16 +31,9 @@ fun main() = application {
             return shadow
         }
 
-//        var colorComparator: Comparator<ColorRGBa> = Comparator { a, b ->
-//            a.luminance.compareTo(b.luminance)
-//        }
-
-
         // Used to access pixel data
         var image = loadImage("data/images/cheeta.jpg")
         var imageData = sizedPixelData(image)
-
-        // TODO: use buffer instead of shadow for increased performance?
 
         window.drop.listen {
             it.files.firstOrNull()?.let { file ->
@@ -52,21 +42,41 @@ fun main() = application {
             }
         }
 
+        var colorComparator: Comparator<ColorRGBa>? = null
+
+        keyboard.keyUp.listen {
+            colorComparator = when (it.name) {
+                "1" -> null
+                "2" -> Comparator { a, b ->
+                    // Hue
+                    b.toHSLa().h.compareTo(a.toHSLa().h)
+                }
+                "3" -> Comparator { a, b ->
+                    // Saturation
+                    b.toHSLa().s.compareTo(a.toHSLa().s)
+                }
+                "4" -> Comparator { a, b ->
+                    // Luminance
+                    b.luminance.compareTo(a.luminance)
+                }
+                else -> colorComparator
+            }
+        }
+
         extend {
             val colors = mutableListOf<ColorRGBa>()
             val rectSize = max(mouse.position.x, 10.0)
-            val rectSizeI = rectSize.toInt()
+            val gridSize = rectSize.toInt()
 
-            for (y in 0 until height step rectSizeI) {
-                for (x in 0 until width step rectSizeI) {
+            for (y in 0 until height step gridSize) {
+                for (x in 0 until width step gridSize) {
                     colors.add(imageData[x, y])
                 }
             }
 
-//            colors.sortWith { a, b ->
-//                a.luminance.compareTo(b.luminance)
-//            }
-            // TODO: sort the colors
+            colorComparator?.let {
+                colors.sortWith(it)
+            }
 
             drawer.stroke = null
 
